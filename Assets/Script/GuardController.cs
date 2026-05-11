@@ -1,6 +1,7 @@
 using System;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class GuardController : MonoBehaviour
 {
@@ -12,11 +13,16 @@ public class GuardController : MonoBehaviour
 
     [SerializeField]
     private float _recognitionAngle = 15;
+    
+    private NavMeshAgent _agent;
 
     private void Awake()
     {
         //Rotate every 5 second - CHANGE IT LATER
-        InvokeRepeating("Rotate", 0f, 5f);
+        //InvokeRepeating("Rotate", 0f, 5f);
+        _agent = GetComponent<NavMeshAgent>();
+        _agent.updateRotation = false;
+        _agent.updateUpAxis = false;
     }
 
     private void Update()
@@ -60,6 +66,7 @@ public class GuardController : MonoBehaviour
     /// <param name="pos">Position of trigger</param>
     public void Trigger(Vector2 pos)
     {
+        _agent.SetDestination(new(pos.x, pos.y, transform.position.z));
         Debug.Log("Je te vois");
     }
 }
