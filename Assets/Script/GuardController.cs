@@ -21,8 +21,6 @@ public class GuardController : MonoBehaviour
         //Rotate every 5 second - CHANGE IT LATER
         //InvokeRepeating("Rotate", 0f, 5f);
         _agent = GetComponent<NavMeshAgent>();
-        _agent.updateRotation = false;
-        _agent.updateUpAxis = false;
     }
 
     private void Update()
@@ -47,7 +45,7 @@ public class GuardController : MonoBehaviour
     /// </summary>
     private bool CheckForPlayer()
     {
-        float angle = Mathf.Acos(Vector3.Dot(Vector3.Normalize(transform.up), Vector3.Normalize(transform.position - playerPos.position)));
+        float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up), Vector3.Normalize(transform.position - playerPos.position)));
         angle = angle * 180 / Mathf.PI;
         if (angle < _recognitionAngle)
         {
