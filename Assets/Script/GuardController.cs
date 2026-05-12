@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Event;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -14,18 +15,22 @@ public class GuardController : MonoBehaviour
 
     [SerializeField]
     private float _recognitionAngle = 15;
+
+    [SerializeField]
+    private float soundDistance = 10;
     
     private NavMeshAgent _agent;
+    private Coroutine LostCoroutine;
+    private bool agentMoving = false;
 
     private void Awake()
     {
         //Rotate every 5 second - CHANGE IT LATER
         //InvokeRepeating("Rotate", 0f, 5f);
         _agent = GetComponent<NavMeshAgent>();
+        
+        EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
     }
-
-    private Coroutine LostCoroutine;
-    private bool agentMoving = false;
     
     private void Update()
     {
@@ -50,6 +55,14 @@ public class GuardController : MonoBehaviour
     private void Rotate(float angle = 90)
     {
         transform.Rotate(Vector3.forward, angle);
+    }
+
+    private void PlayerAttack(Vector3 target)
+    {
+        if (Vector3.Distance(transform.position, target) < soundDistance)
+        {
+            Trigger(target);
+        }
     }
 
     private IEnumerator LostPlayerRoutine()
