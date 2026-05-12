@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
@@ -23,11 +24,22 @@ public class GuardController : MonoBehaviour
         _agent = GetComponent<NavMeshAgent>();
     }
 
+    private Coroutine LostCoroutine;
+    private bool agentMoving = false;
+    
     private void Update()
     {
         if (CheckForPlayer())
         {
+            if(LostCoroutine != null)
+                StopCoroutine(LostCoroutine);
             Trigger(playerPos.position);
+        }
+
+        if (agentMoving && _agent.remainingDistance <= _agent.stoppingDistance)
+        {
+            agentMoving = false;
+            LostCoroutine = StartCoroutine("LostPlayerRoutine");
         }
     }
 
@@ -38,6 +50,30 @@ public class GuardController : MonoBehaviour
     private void Rotate(float angle = 90)
     {
         transform.Rotate(Vector3.forward, angle);
+    }
+
+    private IEnumerator LostPlayerRoutine()
+    {
+        float nextAngle = 0f;
+        Quaternion rotation = transform.rotation;
+        
+        Quaternion endAngle = rotation * Quaternion.Euler(0f, 0f, 90f);
+        while (nextAngle < 0.75f)
+        {
+            transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 0.75f);
+            nextAngle += Time.deltaTime;
+            yield return null;
+        }
+        
+        nextAngle = 0f;
+        rotation = transform.rotation;
+        endAngle = rotation * Quaternion.Euler(0f, 0f, 180f);
+        while (nextAngle < 1.5f)
+        {
+            transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 1.5f);
+            nextAngle += Time.deltaTime;
+            yield return null;
+        }
     }
 
     /// <summary>
@@ -65,6 +101,7 @@ public class GuardController : MonoBehaviour
     public void Trigger(Vector2 pos)
     {
         _agent.SetDestination(new(pos.x, pos.y, transform.position.z));
+        agentMoving = true;
         Debug.Log("Je te vois");
     }
 }
