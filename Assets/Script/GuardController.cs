@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using Event;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -22,6 +23,9 @@ public class GuardController : MonoBehaviour
     private NavMeshAgent _agent;
     private Coroutine LostCoroutine;
     private bool agentMoving = false;
+    [SerializeField]
+    private List<Vector3> patrolPoints = new();
+    private int nextPatrolPoint = 0;
 
     private void Awake()
     {
@@ -30,8 +34,22 @@ public class GuardController : MonoBehaviour
         _agent = GetComponent<NavMeshAgent>();
         
         EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
+        
+        LineRenderer lr = GetComponent<LineRenderer>();
+        for (int i = 0; i < lr.positionCount; i++)
+        {
+            var pos = lr.GetPosition(i);
+            pos.z = 0;
+            patrolPoints.Add(pos);
+        }
+        Destroy(lr);
     }
-    
+
+    private void Start()
+    {
+        GoToNextPatrolPoint();
+    }
+
     private void Update()
     {
         if (CheckForPlayer())
@@ -87,6 +105,16 @@ public class GuardController : MonoBehaviour
             nextAngle += Time.deltaTime;
             yield return null;
         }
+        
+        //Go to next point
+        GoToNextPatrolPoint();
+    }
+
+    private void GoToNextPatrolPoint()
+    {
+        _agent.SetDestination(patrolPoints[nextPatrolPoint]);
+        nextPatrolPoint = (nextPatrolPoint + 1) % patrolPoints.Count;
+        agentMoving = true;
     }
 
     /// <summary>
