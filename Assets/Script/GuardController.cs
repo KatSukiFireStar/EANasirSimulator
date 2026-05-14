@@ -5,6 +5,7 @@ using Event;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Rendering.Universal;
 
 public class GuardController : MonoBehaviour
 {
@@ -43,6 +44,10 @@ public class GuardController : MonoBehaviour
             patrolPoints.Add(pos);
         }
         Destroy(lr);
+
+        var light = GetComponentInChildren<Light2D>();
+        light.pointLightOuterRadius = _recognitionDistance;
+        light.pointLightOuterAngle = _recognitionAngle;
     }
 
     private void Start()
