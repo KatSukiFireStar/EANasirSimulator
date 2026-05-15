@@ -1,4 +1,6 @@
+using Event;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Player
 {
@@ -17,8 +19,15 @@ namespace Player
             _input.Player.Enable();
             
             _rb = GetComponent<Rigidbody2D>();
+            
+            _input.Player.Attack.performed += AttackOnperformed;
         }
-    
+
+        private void AttackOnperformed(InputAction.CallbackContext obj)
+        {
+            EventManager.InvokeEvent("PlayerAttack", transform.position);
+        }
+
         private void Update()
         {
             var move = _input.Player.Move.ReadValue<Vector2>();
