@@ -12,6 +12,7 @@ namespace Player
 
         [SerializeField]
         private Vector2 speed;
+        private Vector2 move;
     
         private void Awake()
         {
@@ -30,8 +31,11 @@ namespace Player
 
         private void Update()
         {
-            var move = _input.Player.Move.ReadValue<Vector2>();
-            
+            move = _input.Player.Move.ReadValue<Vector2>();
+        }
+
+        private void FixedUpdate()
+        {
             _rb.MovePosition(_rb.position + move * speed * Time.deltaTime);
         }
     }
