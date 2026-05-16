@@ -176,6 +176,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2fc351479b3935d49bbe2bbb7d0961be, type: 3}
+--- !u!114 &655987453 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7982649939039803562, guid: 2fc351479b3935d49bbe2bbb7d0961be, type: 3}
+  m_PrefabInstance: {fileID: 569927709}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f13f95293513c7b4fb923774f225065f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
 --- !u!1 &777965020
 GameObject:
   m_ObjectHideFlags: 0
@@ -333,6 +344,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2446592707756514981, guid: 59841246db3be2b418ba56e5640b66eb, type: 3}
+      propertyPath: locked
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2446592707756514981, guid: 59841246db3be2b418ba56e5640b66eb, type: 3}
+      propertyPath: allOpeningTriggers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2446592707756514981, guid: 59841246db3be2b418ba56e5640b66eb, type: 3}
+      propertyPath: 'allOpeningTriggers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 655987453}
     - target: {fileID: 5803274518576255371, guid: 59841246db3be2b418ba56e5640b66eb, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.7338874
