@@ -12,7 +12,7 @@ namespace Player
 		private Rigidbody2D _rb;
 
 		[SerializeField]
-		private Vector2 speed;
+		private float speed = 10;
 
 		[SerializeField]
 		private float damage;
@@ -23,6 +23,9 @@ namespace Player
 		private IAttackable _attackedObject;
 		private IInteractable _interactableObject;
 
+		[SerializeField]
+		private int maxCopperQuantity = 20;
+		[SerializeField]
 		private int _copperQuantity = 0;
 
 		private void Awake()
@@ -85,7 +88,29 @@ namespace Player
 
 		private void FixedUpdate()
 		{
-			_rb.MovePosition(_rb.position + move * speed * Time.deltaTime);
+			float calculateSpeed = speed;
+
+			if (_copperQuantity <= maxCopperQuantity * 0.5f)
+			{
+				
+			}
+			else if (_copperQuantity > maxCopperQuantity * 0.5f && _copperQuantity <= maxCopperQuantity * 0.75f)
+			{
+				calculateSpeed *= 0.9f;
+			}
+			else if (_copperQuantity > maxCopperQuantity * 0.75f && _copperQuantity <= maxCopperQuantity)
+			{
+				calculateSpeed *= 0.8f;
+			}
+			else
+			{
+				float mult = -((float)_copperQuantity / (float)maxCopperQuantity) + 1f + 0.8f;
+				calculateSpeed *= mult < 0 ? 0f : mult;
+			}
+			
+			Debug.Log(calculateSpeed);
+			
+			_rb.MovePosition(_rb.position + move * (calculateSpeed * Time.deltaTime));
 			float normU = Mathf.Sqrt(Mathf.Pow(move.x, 2) + Mathf.Pow(move.y, 2));
 
 			Vector2 normMove = Vector2.Normalize(new Vector2(move.x, 0));
