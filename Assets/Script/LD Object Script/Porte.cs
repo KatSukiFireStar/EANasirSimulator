@@ -1,27 +1,31 @@
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class Porte : MonoBehaviour
 {
-    bool allOpening;
+
     [SerializeField] List<Trigger> multiContrainteOpeningTriggers = new List<Trigger>();
     [SerializeField] List<Trigger> nonMultiContrainteOpeningTriggers = new List<Trigger>();
     [SerializeField] List<Trigger> allOpeningTriggers = new List<Trigger>();
     [SerializeField] List<Trigger> nonAllOpeningTriggers = new List<Trigger>();
-    [SerializeField]bool locked;
-    HingeJoint2D doorPivot; 
+    [SerializeField] bool locked;
+    HingeJoint2D doorPivot;
+    float baseRotationZ;
+
     void Start()
     {
         doorPivot = gameObject.GetComponent<HingeJoint2D>();
+        baseRotationZ = transform.localRotation.z;
         
     }
     void Locked(bool _locked)
     {
         if(_locked == true)
         {
-            doorPivot.limits.min.Equals(5);
-            doorPivot.limits.max.Equals(5);
+            transform.rotation = Quaternion.Euler(0f, 0f, baseRotationZ);
         }
     }
     //jai probablement fait de la merde
@@ -34,11 +38,14 @@ public class Porte : MonoBehaviour
             {
                 if (_trigger.interacted == true)
                 {
+                    Debug.Log(_trigger.interacted);
                     return false;
                 }
+                Debug.Log(_trigger.interacted);
                 return true;
             }
         }
+        Debug.Log(_intialLockedState);
         return _intialLockedState;
     }
     // non ou 
@@ -57,7 +64,7 @@ public class Porte : MonoBehaviour
         }
         return _intialLockedState;
     }
-    // verifie si il tout les triger son actif  (porte et)
+    // verifie si il tout les triger son actif  (porte et )
     bool MultiContrainteOpening(List<Trigger> _triggers,bool _intialLockedState)
     {
         if (_triggers != null)
@@ -74,7 +81,7 @@ public class Porte : MonoBehaviour
         }
         return _intialLockedState;
     }
-    //non et
+    //non et (en faite non car c mal fais a re faire il manque un for each)
     bool NonMultiContrainteOpening(List<Trigger> _triggers, bool _intialLockedState)
     {
         if (_triggers != null)
