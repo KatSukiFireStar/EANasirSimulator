@@ -5,27 +5,32 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering.Universal;
 
-public class GuardController : MonoBehaviour
+public class GuardController : MonoBehaviour, IAttackable
 {
+    [SerializeField]
+    private Transform playerPos;
+
+    [SerializeField]
+    private float m_recognitionDistance = 5;
+
+    [SerializeField]
+    private float m_recognitionAngle = 15;
+
+    [SerializeField]
+    private float m_soundDistance = 10;
+    
     private NavMeshAgent m_agent;
     private Coroutine LostCoroutine;
-
-    [SerializeField] private List<Vector3> patrolPoints = new();
-    [SerializeField] private Transform playerPos;
-
-    [SerializeField] private float m_recognitionDistance = 5;
-    [SerializeField] private float m_recognitionAngle = 15;
-    [SerializeField] private float m_soundDistance = 10;
-
-    private int m_nextPatrolPoint = 0;
     private bool m_agentMoving = false;
+    [SerializeField]
+    private List<Vector3> patrolPoints = new();
+    private int m_nextPatrolPoint = 0;
 
     // Init NavMeshAgent, player attack, patrol points & the guard line of sight
     private void Awake()
     {
-        // Rotate every 5 second - CHANGE IT LATER
-        // InvokeRepeating("Rotate", 0f, 5f);
         m_agent = GetComponent<NavMeshAgent>();
+        
         EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
 
         LineRenderer lr = GetComponent<LineRenderer>();
@@ -65,8 +70,10 @@ public class GuardController : MonoBehaviour
         }
     }
 
-    // Rotate the guard. Use the forward axis and rotate with angle.
-    // angle is in degree
+    /// <summary>
+    /// Rotate the guard. Use the forward axis and rotate with angle.
+    /// </summary>
+    /// <param name="angle">Angle in degrees</param>
     private void Rotate(float _angle = 90)
     {
         transform.Rotate(Vector3.forward, _angle);
@@ -117,7 +124,9 @@ public class GuardController : MonoBehaviour
         m_agentMoving = true;
     }
 
-    // Check if the player is in the "light" 
+    /// <summary>
+    /// Check if the player is in the "light" 
+    /// </summary>
     private bool CheckForPlayer()
     {
         float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up), Vector3.Normalize(transform.position - playerPos.position)));
@@ -132,12 +141,19 @@ public class GuardController : MonoBehaviour
 
         return false;
     }
-
-    // Trigger the "see the player comportement"
+    
+    /// <summary>
+    /// Trigger the "see the player comportement"
+    /// </summary>
+    /// <param name="pos">Position of trigger</param>
     public void Trigger(Vector2 _triggerPos)
     {
         m_agent.SetDestination(new(_triggerPos.x, _triggerPos.y, transform.position.z));
         m_agentMoving = true;
-        Debug.Log("Je te vois");
+    }
+
+    public void IsAttacked(float damage)
+    {
+        Debug.Log("Non aled on m'attaque");
     }
 }

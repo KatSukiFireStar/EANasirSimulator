@@ -12,8 +12,14 @@ namespace Player
 
         [SerializeField]
         private Vector2 speed;
+        [SerializeField]
+        private float damage;
+        
+        
         private Vector2 move;
         private Animator _animator;
+        
+        private IAttackable _attackedObject;
     
         private void Awake()
         {
@@ -25,18 +31,25 @@ namespace Player
             _input.Player.Attack.performed += AttackOnperformed;
             _animator = GetComponent<Animator>();
             
-            EventManager.AddListener<GameObject>("AttackTriggerBox", AttackTriggerBox);
+            EventManager.AddListener<IAttackable>("AttackTriggerBox", AttackTriggerBox);
+            EventManager.AddListener("RemoveTriggerBox", RemoveTriggerBox);
         }
 
         private void AttackOnperformed(InputAction.CallbackContext obj)
         {
             EventManager.InvokeEvent("PlayerAttack", transform.position);
             _animator.SetTrigger("Attack");
+            _attackedObject?.IsAttacked(damage);
         }
 
-        private void AttackTriggerBox(GameObject obj)
+        private void AttackTriggerBox(IAttackable obj)
         {
-            
+            _attackedObject = obj;
+        }
+
+        private void RemoveTriggerBox()
+        {
+            _attackedObject = null;
         }
 
         private void Update()
