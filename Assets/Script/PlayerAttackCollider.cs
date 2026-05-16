@@ -10,6 +10,10 @@ public class PlayerAttackCollider : MonoBehaviour
 		{
 			EventManager.InvokeEvent("AttackTriggerBox", obj);
 		}
+		else if (other.TryGetComponent(out IInteractable inter))
+		{
+			EventManager.InvokeEvent("InteractTriggerBox", obj);
+		}
 	}
 
 	private void OnTriggerExit2D(Collider2D other)
@@ -17,6 +21,10 @@ public class PlayerAttackCollider : MonoBehaviour
 		if (other.TryGetComponent(out IAttackable obj))
 		{
 			EventManager.InvokeEvent("RemoveTriggerBox");
+		}
+		else if (other.TryGetComponent(out IInteractable inter))
+		{
+			EventManager.InvokeEvent("RemoveInteractTriggerBox");
 		}
 	}
 }
