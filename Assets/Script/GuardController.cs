@@ -1,41 +1,33 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using Event;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering.Universal;
 
 public class GuardController : MonoBehaviour
 {
-    [SerializeField]
-    private Transform playerPos;
-
-    [SerializeField]
-    private float _recognitionDistance = 5;
-
-    [SerializeField]
-    private float _recognitionAngle = 15;
-
-    [SerializeField]
-    private float soundDistance = 10;
-    
-    private NavMeshAgent _agent;
+    private NavMeshAgent m_agent;
     private Coroutine LostCoroutine;
-    private bool agentMoving = false;
-    [SerializeField]
-    private List<Vector3> patrolPoints = new();
-    private int nextPatrolPoint = 0;
 
+    [SerializeField] private List<Vector3> patrolPoints = new();
+    [SerializeField] private Transform playerPos;
+
+    [SerializeField] private float m_recognitionDistance = 5;
+    [SerializeField] private float m_recognitionAngle = 15;
+    [SerializeField] private float m_soundDistance = 10;
+
+    private int m_nextPatrolPoint = 0;
+    private bool m_agentMoving = false;
+
+    // Init NavMeshAgent, player attack, patrol points & the guard line of sight
     private void Awake()
     {
-        //Rotate every 5 second - CHANGE IT LATER
-        //InvokeRepeating("Rotate", 0f, 5f);
-        _agent = GetComponent<NavMeshAgent>();
-        
+        // Rotate every 5 second - CHANGE IT LATER
+        // InvokeRepeating("Rotate", 0f, 5f);
+        m_agent = GetComponent<NavMeshAgent>();
         EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
-        
+
         LineRenderer lr = GetComponent<LineRenderer>();
         for (int i = 0; i < lr.positionCount; i++)
         {
@@ -45,54 +37,56 @@ public class GuardController : MonoBehaviour
         }
         Destroy(lr);
 
-        var light = GetComponentInChildren<Light2D>();
-        light.pointLightOuterRadius = _recognitionDistance;
-        light.pointLightOuterAngle = _recognitionAngle;
+        Light2D light = GetComponentInChildren<Light2D>();
+        light.pointLightOuterRadius = m_recognitionDistance;
+        light.pointLightOuterAngle = m_recognitionAngle;
     }
 
+    // Start patroling routine
     private void Start()
     {
         GoToNextPatrolPoint();
     }
 
+    // Check if the player is in the los (line of sight) else patrol
     private void Update()
     {
         if (CheckForPlayer())
         {
-            if(LostCoroutine != null)
+            if (LostCoroutine != null)
                 StopCoroutine(LostCoroutine);
             Trigger(playerPos.position);
         }
 
-        if (agentMoving && _agent.remainingDistance <= _agent.stoppingDistance)
+        if (m_agentMoving && m_agent.remainingDistance <= m_agent.stoppingDistance)
         {
-            agentMoving = false;
+            m_agentMoving = false;
             LostCoroutine = StartCoroutine("LostPlayerRoutine");
         }
     }
 
-    /// <summary>
-    /// Rotate the guard. Use the forward axis and rotate with angle.
-    /// </summary>
-    /// <param name="angle">Angle in degrees</param>
-    private void Rotate(float angle = 90)
+    // Rotate the guard. Use the forward axis and rotate with angle.
+    // angle is in degree
+    private void Rotate(float _angle = 90)
     {
-        transform.Rotate(Vector3.forward, angle);
+        transform.Rotate(Vector3.forward, _angle);
     }
 
-    private void PlayerAttack(Vector3 target)
+    // Guard routine if the player attacks it
+    private void PlayerAttack(Vector3 _target)
     {
-        if (Vector3.Distance(transform.position, target) < soundDistance)
+        if (Vector3.Distance(transform.position, _target) < m_soundDistance)
         {
-            Trigger(target);
+            Trigger(_target);
         }
     }
 
+    // Guard routine when it loose los (line of sight) of the player 
     private IEnumerator LostPlayerRoutine()
     {
         float nextAngle = 0f;
         Quaternion rotation = transform.rotation;
-        
+
         Quaternion endAngle = rotation * Quaternion.Euler(0f, 0f, 90f);
         while (nextAngle < 0.75f)
         {
@@ -100,7 +94,7 @@ public class GuardController : MonoBehaviour
             nextAngle += Time.deltaTime;
             yield return null;
         }
-        
+
         nextAngle = 0f;
         rotation = transform.rotation;
         endAngle = rotation * Quaternion.Euler(0f, 0f, 180f);
@@ -110,28 +104,27 @@ public class GuardController : MonoBehaviour
             nextAngle += Time.deltaTime;
             yield return null;
         }
-        
+
         //Go to next point
         GoToNextPatrolPoint();
     }
 
+    // Guard patroling routine
     private void GoToNextPatrolPoint()
     {
-        _agent.SetDestination(patrolPoints[nextPatrolPoint]);
-        nextPatrolPoint = (nextPatrolPoint + 1) % patrolPoints.Count;
-        agentMoving = true;
+        m_agent.SetDestination(patrolPoints[m_nextPatrolPoint]);
+        m_nextPatrolPoint = (m_nextPatrolPoint + 1) % patrolPoints.Count;
+        m_agentMoving = true;
     }
 
-    /// <summary>
-    /// Check if the player is in the "light" 
-    /// </summary>
+    // Check if the player is in the "light" 
     private bool CheckForPlayer()
     {
         float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up), Vector3.Normalize(transform.position - playerPos.position)));
         angle = angle * 180 / Mathf.PI;
-        if (angle < _recognitionAngle)
+        if (angle < m_recognitionAngle)
         {
-            if (Vector3.Distance(transform.position, playerPos.position) < _recognitionDistance)
+            if (Vector3.Distance(transform.position, playerPos.position) < m_recognitionDistance)
             {
                 return true;
             }
@@ -139,15 +132,12 @@ public class GuardController : MonoBehaviour
 
         return false;
     }
-    
-    /// <summary>
-    /// Trigger the "see the player comportement"
-    /// </summary>
-    /// <param name="pos">Position of trigger</param>
-    public void Trigger(Vector2 pos)
+
+    // Trigger the "see the player comportement"
+    public void Trigger(Vector2 _triggerPos)
     {
-        _agent.SetDestination(new(pos.x, pos.y, transform.position.z));
-        agentMoving = true;
+        m_agent.SetDestination(new(_triggerPos.x, _triggerPos.y, transform.position.z));
+        m_agentMoving = true;
         Debug.Log("Je te vois");
     }
 }
