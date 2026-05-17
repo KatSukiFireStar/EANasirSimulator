@@ -8,38 +8,37 @@ namespace Player
 	[RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer), typeof(Animator))]
 	public class PlayerController : MonoBehaviour
 	{
-		private InputActions _input;
-		private Rigidbody2D _rb;
+		private InputActions m_input;
+		private Rigidbody2D m_rb;
 
-		[SerializeField]
-		private float speed = 10;
+		private Vector2 m_move;
+		private Animator m_animator;
 
-		[SerializeField]
-		private float damage;
+		private IAttackable m_attackedObject;
+		private IInteractable m_interactableObject;
 
-		private Vector2 move;
-		private Animator _animator;
-		private float _calculateSpeed = 0;
+        [SerializeField] private float m_speed = 10f;
+        [SerializeField] private float m_damage;
 
-		private IAttackable _attackedObject;
-		private IInteractable _interactableObject;
+        private float m_calculateSpeed = 0;
+        
+		[SerializeField] private float m_maxCopperQuantity = 20f;
+		[SerializeField] private float m_copperQuantity = 0f;
 
-		[SerializeField]
-		private int maxCopperQuantity = 20;
-		[SerializeField]
-		private int _copperQuantity = 0;
-
+		/// <summary>
+		/// Init rb, player animator and other params
+		/// </summary>
 		private void Awake()
 		{
-			_input = new InputActions();
-			_input.Player.Enable();
+            m_rb = GetComponent<Rigidbody2D>();
+            m_animator = GetComponent<Animator>();
 
-			_rb = GetComponent<Rigidbody2D>();
-			_calculateSpeed = speed;
+            m_calculateSpeed = m_speed;
 
-			_input.Player.Attack.performed += AttackOnperformed;
-			_input.Player.Interact.performed += InteractOnperformed;
-			_animator = GetComponent<Animator>();
+            m_input = new InputActions();
+            m_input.Player.Enable();
+            m_input.Player.Attack.performed += AttackOnPerformed;
+			m_input.Player.Interact.performed += InteractOnPerformed;
 
 			EventManager.AddListener<IAttackable>("AttackTriggerBox", AttackTriggerBox);
 			EventManager.AddListener("RemoveTriggerBox", RemoveTriggerBox);
@@ -48,79 +47,65 @@ namespace Player
 		}
 
 #region Events
-
-		private void InteractOnperformed(InputAction.CallbackContext obj)
+		/// <summary>
+		/// Change calculate speed depending of copper quantity
+		/// </summary>
+		private void InteractOnPerformed(InputAction.CallbackContext _)
 		{
-			_copperQuantity += _interactableObject?.Interact() ?? 0;
-			
-			_calculateSpeed = speed;
+			m_copperQuantity += m_interactableObject?.Interact() ?? 0;
+			m_calculateSpeed = m_speed;
 
-			if (_copperQuantity <= maxCopperQuantity * 0.5f)
+			if (m_copperQuantity <= m_maxCopperQuantity * 0.5f)
 			{
-				
+				// No changement
 			}
-			else if (_copperQuantity > maxCopperQuantity * 0.5f && _copperQuantity <= maxCopperQuantity * 0.75f)
+			else if (m_copperQuantity > m_maxCopperQuantity * 0.5f && m_copperQuantity <= m_maxCopperQuantity * 0.75f)
 			{
-				_calculateSpeed *= 0.9f;
+				m_calculateSpeed *= 0.9f;
 			}
-			else if (_copperQuantity > maxCopperQuantity * 0.75f && _copperQuantity <= maxCopperQuantity)
+			else if (m_copperQuantity > m_maxCopperQuantity * 0.75f && m_copperQuantity <= m_maxCopperQuantity)
 			{
-				_calculateSpeed *= 0.8f;
+				m_calculateSpeed *= 0.8f;
 			}
 			else
 			{
-				float mult = -((float)_copperQuantity / (float)maxCopperQuantity) + 1f + 0.8f;
-				_calculateSpeed *= mult < 0 ? 0f : mult;
+				float mult = -(m_copperQuantity / m_maxCopperQuantity) + 1f + 0.8f;
+				m_calculateSpeed *= mult < 0 ? 0f : mult;
 			}
 		}
 
-		private void AttackOnperformed(InputAction.CallbackContext obj)
+		private void AttackOnPerformed(InputAction.CallbackContext _)
 		{
 			EventManager.InvokeEvent("PlayerAttack", transform.position);
-			_animator.SetTrigger("Attack");
-			_attackedObject?.IsAttacked(damage);
+			m_animator.SetTrigger("Attack");
+			m_attackedObject?.IsAttacked(m_damage);
 		}
 
-		private void AttackTriggerBox(IAttackable obj)
-		{
-			_attackedObject = obj;
-		}
-
-		private void RemoveTriggerBox()
-		{
-			_attackedObject = null;
-		}
-
-		private void InteractTriggerBox(IInteractable obj)
-		{
-			_interactableObject = obj;
-		}
-
-		private void RemoveInteractTriggerBox()
-		{
-			_interactableObject = null;
-		}
-
+		// Trigger box behavior
+		private void AttackTriggerBox(IAttackable _obj) { m_attackedObject = _obj; }
+		private void RemoveTriggerBox() { m_attackedObject = null; }
+		private void InteractTriggerBox(IInteractable _obj) { m_interactableObject = _obj; }
+		private void RemoveInteractTriggerBox() { m_interactableObject = null; }
 #endregion
 
-		private void Update()
-		{
-			move = _input.Player.Move.ReadValue<Vector2>();
-		}
+		/// <summary>
+		/// update m_move depending on player control
+		/// </summary>
+		private void Update() { m_move = m_input.Player.Move.ReadValue<Vector2>(); }
 
 		private void FixedUpdate()
 		{
-			_rb.MovePosition(_rb.position + move * (_calculateSpeed * Time.deltaTime));
-			float normU = Mathf.Sqrt(Mathf.Pow(move.x, 2) + Mathf.Pow(move.y, 2));
+			m_rb.MovePosition(m_rb.position + m_move * (m_calculateSpeed * Time.deltaTime));
+			float normU = Mathf.Sqrt(Mathf.Pow(m_move.x, 2) + Mathf.Pow(m_move.y, 2));
 
-			Vector2 normMove = Vector2.Normalize(new Vector2(move.x, 0));
+			Vector2 normMove = Vector2.Normalize(new Vector2(m_move.x, 0));
 
 			if (normU > 0.1f)
 			{
-				float a = Mathf.Acos(-move.y / normU) * 180 / Mathf.PI;
+				float a = Mathf.Acos(-m_move.y / normU) * 180 / Mathf.PI;
 				if (normMove.x != 0)
 					a *= normMove.x;
-				_rb.rotation = a;
+				m_rb.rotation = a;
 			}
 		}
 	}

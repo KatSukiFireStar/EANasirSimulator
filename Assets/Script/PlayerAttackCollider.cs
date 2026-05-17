@@ -1,28 +1,27 @@
-using System;
 using Event;
 using UnityEngine;
 
 public class PlayerAttackCollider : MonoBehaviour
 {
-	private void OnTriggerEnter2D(Collider2D other)
+	private void OnTriggerEnter2D(Collider2D _other)
 	{
-		if (other.TryGetComponent(out IAttackable obj))
+		if (_other.TryGetComponent(out IAttackable _obj))
 		{
-			EventManager.InvokeEvent("AttackTriggerBox", obj);
+			EventManager.InvokeEvent("AttackTriggerBox", _obj);
 		}
-		else if (other.TryGetComponent(out IInteractable inter))
+		else if (_other.TryGetComponent(out IInteractable _inter))
 		{
-			EventManager.InvokeEvent("InteractTriggerBox", obj);
+			EventManager.InvokeEvent("InteractTriggerBox", _inter);
 		}
 	}
 
-	private void OnTriggerExit2D(Collider2D other)
+	private void OnTriggerExit2D(Collider2D _other)
 	{
-		if (other.TryGetComponent(out IAttackable obj))
+        if (_other.TryGetComponent(out IAttackable _))
 		{
 			EventManager.InvokeEvent("RemoveTriggerBox");
 		}
-		else if (other.TryGetComponent(out IInteractable inter))
+		else if (_other.TryGetComponent(out IInteractable _))
 		{
 			EventManager.InvokeEvent("RemoveInteractTriggerBox");
 		}
