@@ -26,7 +26,9 @@ public class GuardController : MonoBehaviour, IAttackable
     private List<Vector3> patrolPoints = new();
     private int m_nextPatrolPoint = 0;
 
-    // Init NavMeshAgent, player attack, patrol points & the guard line of sight
+    /// </summary>
+    /// Init NavMeshAgent, player attack, patrol points & the guard line of sight
+    /// </summary>
     private void Awake()
     {
         m_agent = GetComponent<NavMeshAgent>();
@@ -47,13 +49,17 @@ public class GuardController : MonoBehaviour, IAttackable
         light.pointLightOuterAngle = m_recognitionAngle;
     }
 
-    // Start patroling routine
+    /// </summary>
+    /// Start patroling routine
+    /// </summary>
     private void Start()
     {
         GoToNextPatrolPoint();
     }
 
-    // Check if the player is in the los (line of sight) else patrol
+    /// </summary>
+    /// Check if the player is in the los (line of sight) else patrol
+    /// </summary>
     private void Update()
     {
         if (CheckForPlayer())
@@ -73,13 +79,15 @@ public class GuardController : MonoBehaviour, IAttackable
     /// <summary>
     /// Rotate the guard. Use the forward axis and rotate with angle.
     /// </summary>
-    /// <param name="angle">Angle in degrees</param>
+    /// <param name="_angle">Angle in degrees</param>
     private void Rotate(float _angle = 90)
     {
         transform.Rotate(Vector3.forward, _angle);
     }
 
-    // Guard routine if the player attacks it
+    /// </summary>
+    /// Guard routine to attack the player if in bound
+    /// </summary>
     private void PlayerAttack(Vector3 _target)
     {
         if (Vector3.Distance(transform.position, _target) < m_soundDistance)
@@ -88,7 +96,9 @@ public class GuardController : MonoBehaviour, IAttackable
         }
     }
 
-    // Guard routine when it loose los (line of sight) of the player 
+    /// </summary>
+    /// Guard routine when it loose los (line of sight) of the player 
+    /// </summary>
     private IEnumerator LostPlayerRoutine()
     {
         float nextAngle = 0f;
@@ -112,11 +122,13 @@ public class GuardController : MonoBehaviour, IAttackable
             yield return null;
         }
 
-        //Go to next point
+        // Go to next point
         GoToNextPatrolPoint();
     }
 
-    // Guard patroling routine
+    /// </summary>
+    /// Guard patroling routine
+    /// </summary>
     private void GoToNextPatrolPoint()
     {
         m_agent.SetDestination(patrolPoints[m_nextPatrolPoint]);
@@ -138,14 +150,12 @@ public class GuardController : MonoBehaviour, IAttackable
                 return true;
             }
         }
-
         return false;
     }
     
     /// <summary>
     /// Trigger the "see the player comportement"
     /// </summary>
-    /// <param name="pos">Position of trigger</param>
     public void Trigger(Vector2 _triggerPos)
     {
         m_agent.SetDestination(new(_triggerPos.x, _triggerPos.y, transform.position.z));
