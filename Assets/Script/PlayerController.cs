@@ -19,6 +19,7 @@ namespace Player
 
 		private Vector2 move;
 		private Animator _animator;
+		private float _calculateSpeed = 0;
 
 		private IAttackable _attackedObject;
 		private IInteractable _interactableObject;
@@ -34,6 +35,7 @@ namespace Player
 			_input.Player.Enable();
 
 			_rb = GetComponent<Rigidbody2D>();
+			_calculateSpeed = speed;
 
 			_input.Player.Attack.performed += AttackOnperformed;
 			_input.Player.Interact.performed += InteractOnperformed;
@@ -50,6 +52,26 @@ namespace Player
 		private void InteractOnperformed(InputAction.CallbackContext obj)
 		{
 			_copperQuantity += _interactableObject?.Interact() ?? 0;
+			
+			_calculateSpeed = speed;
+
+			if (_copperQuantity <= maxCopperQuantity * 0.5f)
+			{
+				
+			}
+			else if (_copperQuantity > maxCopperQuantity * 0.5f && _copperQuantity <= maxCopperQuantity * 0.75f)
+			{
+				_calculateSpeed *= 0.9f;
+			}
+			else if (_copperQuantity > maxCopperQuantity * 0.75f && _copperQuantity <= maxCopperQuantity)
+			{
+				_calculateSpeed *= 0.8f;
+			}
+			else
+			{
+				float mult = -((float)_copperQuantity / (float)maxCopperQuantity) + 1f + 0.8f;
+				_calculateSpeed *= mult < 0 ? 0f : mult;
+			}
 		}
 
 		private void AttackOnperformed(InputAction.CallbackContext obj)
@@ -88,29 +110,7 @@ namespace Player
 
 		private void FixedUpdate()
 		{
-			float calculateSpeed = speed;
-
-			if (_copperQuantity <= maxCopperQuantity * 0.5f)
-			{
-				
-			}
-			else if (_copperQuantity > maxCopperQuantity * 0.5f && _copperQuantity <= maxCopperQuantity * 0.75f)
-			{
-				calculateSpeed *= 0.9f;
-			}
-			else if (_copperQuantity > maxCopperQuantity * 0.75f && _copperQuantity <= maxCopperQuantity)
-			{
-				calculateSpeed *= 0.8f;
-			}
-			else
-			{
-				float mult = -((float)_copperQuantity / (float)maxCopperQuantity) + 1f + 0.8f;
-				calculateSpeed *= mult < 0 ? 0f : mult;
-			}
-			
-			Debug.Log(calculateSpeed);
-			
-			_rb.MovePosition(_rb.position + move * (calculateSpeed * Time.deltaTime));
+			_rb.MovePosition(_rb.position + move * (_calculateSpeed * Time.deltaTime));
 			float normU = Mathf.Sqrt(Mathf.Pow(move.x, 2) + Mathf.Pow(move.y, 2));
 
 			Vector2 normMove = Vector2.Normalize(new Vector2(move.x, 0));
