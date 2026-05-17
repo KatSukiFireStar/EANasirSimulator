@@ -7,23 +7,17 @@ using UnityEngine.Rendering.Universal;
 
 public class GuardController : MonoBehaviour, IAttackable
 {
-    [SerializeField]
-    private Transform playerPos;
-
-    [SerializeField]
-    private float m_recognitionDistance = 5;
-
-    [SerializeField]
-    private float m_recognitionAngle = 15;
-
-    [SerializeField]
-    private float m_soundDistance = 10;
-    
     private NavMeshAgent m_agent;
-    private Coroutine LostCoroutine;
+    private Coroutine m_lostCoroutine;
+
+    [SerializeField] private List<Vector3> m_patrolPoints = new();
+    [SerializeField] private Transform m_playerPos;
+
+    [SerializeField] private float m_recognitionDistance = 5;
+    [SerializeField] private float m_recognitionAngle = 15;
+    [SerializeField] private float m_soundDistance = 10;
+
     private bool m_agentMoving = false;
-    [SerializeField]
-    private List<Vector3> patrolPoints = new();
     private int m_nextPatrolPoint = 0;
 
     /// </summary>
@@ -40,7 +34,7 @@ public class GuardController : MonoBehaviour, IAttackable
         {
             var pos = lr.GetPosition(i);
             pos.z = 0;
-            patrolPoints.Add(pos);
+            m_patrolPoints.Add(pos);
         }
         Destroy(lr);
 
@@ -64,15 +58,15 @@ public class GuardController : MonoBehaviour, IAttackable
     {
         if (CheckForPlayer())
         {
-            if (LostCoroutine != null)
-                StopCoroutine(LostCoroutine);
-            Trigger(playerPos.position);
+            if (m_lostCoroutine != null)
+                StopCoroutine(m_lostCoroutine);
+            Trigger(m_playerPos.position);
         }
 
         if (m_agentMoving && m_agent.remainingDistance <= m_agent.stoppingDistance)
         {
             m_agentMoving = false;
-            LostCoroutine = StartCoroutine("LostPlayerRoutine");
+            m_lostCoroutine = StartCoroutine("LostPlayerRoutine");
         }
     }
 
@@ -131,8 +125,8 @@ public class GuardController : MonoBehaviour, IAttackable
     /// </summary>
     private void GoToNextPatrolPoint()
     {
-        m_agent.SetDestination(patrolPoints[m_nextPatrolPoint]);
-        m_nextPatrolPoint = (m_nextPatrolPoint + 1) % patrolPoints.Count;
+        m_agent.SetDestination(m_patrolPoints[m_nextPatrolPoint]);
+        m_nextPatrolPoint = (m_nextPatrolPoint + 1) % m_patrolPoints.Count;
         m_agentMoving = true;
     }
 
@@ -141,11 +135,11 @@ public class GuardController : MonoBehaviour, IAttackable
     /// </summary>
     private bool CheckForPlayer()
     {
-        float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up), Vector3.Normalize(transform.position - playerPos.position)));
+        float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up), Vector3.Normalize(transform.position - m_playerPos.position)));
         angle = angle * 180 / Mathf.PI;
         if (angle < m_recognitionAngle)
         {
-            if (Vector3.Distance(transform.position, playerPos.position) < m_recognitionDistance)
+            if (Vector3.Distance(transform.position, m_playerPos.position) < m_recognitionDistance)
             {
                 return true;
             }
