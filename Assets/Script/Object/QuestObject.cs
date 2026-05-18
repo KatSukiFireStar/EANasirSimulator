@@ -1,13 +1,19 @@
+using EANasir.Interface;
+using Event;
 using UnityEngine;
 
 namespace EANasir.Object
 {
-	public class QuestObject : MonoBehaviour
+	public class QuestObject : MonoBehaviour, IInteractable
 	{
-		// Start is called once before the first execution of Update after the MonoBehaviour is created
-		void Start() { }
-
-		// Update is called once per frame
-		void Update() { }
+		[SerializeField]
+		private QuestObjectSO m_questObject;
+		
+		public float Interact()
+		{
+			EventManager.InvokeEvent("AddQuestObjectToInventory", m_questObject);
+			Destroy(gameObject);
+			return 0;
+		}
 	}
 }

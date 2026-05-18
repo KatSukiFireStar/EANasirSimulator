@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using EANasir.Interface;
+using EANasir.Object;
 using Event;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -25,6 +27,8 @@ namespace EANasir.Player
         
 		[SerializeField] private float m_maxCopperQuantity = 20f;
 		[SerializeField] private float m_copperQuantity = 0f;
+		
+		private List<QuestObjectSO> m_questObjects = new();
 
 		/// <summary>
 		/// Init rb, player animator and other params
@@ -45,11 +49,13 @@ namespace EANasir.Player
 			EventManager.AddListener("RemoveTriggerBox", RemoveTriggerBox);
 			EventManager.AddListener<IInteractable>("InteractTriggerBox", InteractTriggerBox);
 			EventManager.AddListener("RemoveInteractTriggerBox", RemoveInteractTriggerBox);
+			
+			EventManager.AddListener<QuestObjectSO>("AddQuestObjectToInventory", AddQuestObjectToInventory);
 		}
 
 #region Events
 		/// <summary>
-		/// Change calculate speed depending of copper quantity
+		/// Add copper and change calculate speed depending of copper quantity
 		/// </summary>
 		private void InteractOnPerformed(InputAction.CallbackContext _)
 		{
@@ -87,6 +93,14 @@ namespace EANasir.Player
 		private void RemoveTriggerBox() { m_attackedObject = null; }
 		private void InteractTriggerBox(IInteractable _obj) { m_interactableObject = _obj; }
 		private void RemoveInteractTriggerBox() { m_interactableObject = null; }
+
+		private void AddQuestObjectToInventory(QuestObjectSO _obj)
+		{
+			m_questObjects.Add(_obj);
+			
+			//Add the object to UI
+		}
+		
 #endregion
 
 		/// <summary>
