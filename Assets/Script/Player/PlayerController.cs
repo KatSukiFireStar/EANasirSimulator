@@ -1,9 +1,10 @@
 using System;
+using EANasir.Interface;
 using Event;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Player
+namespace EANasir.Player
 {
 	[RequireComponent(typeof(Rigidbody2D), typeof(SpriteRenderer), typeof(Animator))]
 	public class PlayerController : MonoBehaviour
