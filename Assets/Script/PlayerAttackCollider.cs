@@ -9,7 +9,7 @@ public class PlayerAttackCollider : MonoBehaviour
 		{
 			EventManager.InvokeEvent("AttackTriggerBox", _obj);
 		}
-		else if (_other.TryGetComponent(out IInteractable _inter))
+		if (_other.TryGetComponent(out IInteractable _inter))
 		{
 			EventManager.InvokeEvent("InteractTriggerBox", _inter);
 		}
@@ -21,7 +21,7 @@ public class PlayerAttackCollider : MonoBehaviour
 		{
 			EventManager.InvokeEvent("RemoveTriggerBox");
 		}
-		else if (_other.TryGetComponent(out IInteractable _))
+		if (_other.TryGetComponent(out IInteractable _))
 		{
 			EventManager.InvokeEvent("RemoveInteractTriggerBox");
 		}

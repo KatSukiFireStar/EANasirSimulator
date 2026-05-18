@@ -135,8 +135,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc8d62c847312b640b465e251a05c02e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player.PlayerController
-  speed: {x: 10, y: 10}
-  damage: 0
+  m_speed: 10
+  m_damage: 5
+  m_maxCopperQuantity: 20
+  m_copperQuantity: 0
 --- !u!58 &2430559874158649081
 CircleCollider2D:
   m_ObjectHideFlags: 0
