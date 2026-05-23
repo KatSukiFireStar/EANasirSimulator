@@ -6,174 +6,159 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering.Universal;
 
-namespace EANasir.Guard
-{
-	public class GuardController : MonoBehaviour, IAttackable
-	{
-		private NavMeshAgent m_agent;
-		private Coroutine m_lostCoroutine;
+namespace EANasir.Guard {
+    public class GuardController : MonoBehaviour, IAttackable {
+        private NavMeshAgent m_agent;
+        private Coroutine m_lostCoroutine = null;
+        [SerializeField] private List<Vector3> m_patrolPoints = new();  // TODO : Replace with GameObject instead of Vector3
+        [SerializeField] private Transform m_playerPos;
 
-		[SerializeField]
-		private List<Vector3> m_patrolPoints = new();
+        [SerializeField] private float m_recognitionDistance = 5;
+        [SerializeField] private float m_recognitionAngle = 15;
+        [SerializeField] private float m_soundDistance = 10;
+        [SerializeField] private float m_lossOfSight = 0;
 
-		[SerializeField]
-		private Transform m_playerPos;
+        private int m_nextPatrolPoint = 0;
+        private bool m_followingPlayer = false;
 
-		[SerializeField]
-		private float m_recognitionDistance = 5;
+        /// </summary>
+        /// Init NavMeshAgent, player attack, patrol points & the guard line of sight
+        /// </summary>
+        private void Awake() {
+            EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
+            m_agent = GetComponent<NavMeshAgent>();
 
-		[SerializeField]
-		private float m_recognitionAngle = 15;
+            // TODO Remove
+            LineRenderer lr = GetComponent<LineRenderer>();
+            for ( int i = 0; i < lr.positionCount; i++ ) {
+                var pos = lr.GetPosition(i);
+                pos.z = 0;
+                m_patrolPoints.Add(pos);
+            }
+            Destroy(lr);
 
-		[SerializeField]
-		private float m_soundDistance = 10;
+            Light2D light = GetComponentInChildren<Light2D>();
+            light.pointLightOuterRadius = m_recognitionDistance;
+            light.pointLightOuterAngle = m_recognitionAngle;
+            GoToNextPatrolPoint();
+        }
 
-		private bool m_agentMoving = false;
-		private int m_nextPatrolPoint = 0;
+        /// </summary>
+        /// Check if the player is in the los (line of sight) else patrol
+        /// CheckForPlayer must be <<<< compared to m_agent.remainingDistance <= m_agent.stoppingDistance
+        /// </summary>
+        private void Update() {
+            // If we see the player or we are chasing it
+            if ( CheckForPlayer() || m_followingPlayer ) {  
+                m_followingPlayer = true;
 
-		/// </summary>
-		/// Init NavMeshAgent, player attack, patrol points & the guard line of sight
-		/// </summary>
-		private void Awake()
-		{
-			m_agent = GetComponent<NavMeshAgent>();
+                // If we are in a coroutine, stop it
+                if ( m_lostCoroutine != null ) {    
+                    StopCoroutine(nameof(LostPlayerRoutine));
+                    m_lostCoroutine = null;
+                }
 
-			EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
+                // Follow player
+                Trigger(m_playerPos.position);  
+            }
 
-			LineRenderer lr = GetComponent<LineRenderer>();
-			for (int i = 0; i < lr.positionCount; i++)
-			{
-				var pos = lr.GetPosition(i);
-				pos.z = 0;
-				m_patrolPoints.Add(pos);
-			}
+            // If we are following the player
+            if ( m_followingPlayer ) {  
+                float agentPlayerDist = Vector3.Distance( transform.position, m_playerPos.position );
 
-			Destroy(lr);
+                // Check that it is not out of bounds (TODO : refacto with a timer maybe ?)
+                if ( agentPlayerDist > m_lossOfSight ) {   
+                    m_followingPlayer = false;
+                }
+            }
 
-			Light2D light = GetComponentInChildren<Light2D>();
-			light.pointLightOuterRadius = m_recognitionDistance;
-			light.pointLightOuterAngle = m_recognitionAngle;
-		}
+            // If we reach our waypoint & we are not following the player
+            if ( !m_followingPlayer && m_agent.remainingDistance <= m_agent.stoppingDistance ) {
+                if ( m_lostCoroutine == null ) {
+                    m_lostCoroutine = StartCoroutine(nameof(LostPlayerRoutine));
+                }
+            }
+        }
 
-		/// </summary>
-		/// Start patroling routine
-		/// </summary>
-		private void Start()
-		{
-			GoToNextPatrolPoint();
-		}
+        /// </summary>
+        /// Guard routine to attack the player if in bound
+        /// </summary>
+        private void PlayerAttack(Vector3 _target) {
+            if ( Vector3.Distance(transform.position, _target) < m_soundDistance ) {
+                Trigger(_target);
+            }
+        }
 
-		/// </summary>
-		/// Check if the player is in the los (line of sight) else patrol
-		/// </summary>
-		private void Update()
-		{
-			if (CheckForPlayer())
-			{
-				if (m_lostCoroutine != null)
-					StopCoroutine(m_lostCoroutine);
-				Trigger(m_playerPos.position);
-			}
+        /// </summary>
+        /// Guard routine when it loose los (line of sight) of the player 
+        /// </summary>
+        private IEnumerator LostPlayerRoutine() {
+            float nextAngle = 0f;
+            Quaternion rotation = transform.rotation;
+            Quaternion defaultRotation = transform.rotation;
 
-			if (m_agentMoving && m_agent.remainingDistance <= m_agent.stoppingDistance)
-			{
-				m_agentMoving = false;
-				m_lostCoroutine = StartCoroutine("LostPlayerRoutine");
-			}
-		}
+            Quaternion endAngle = rotation * Quaternion.Euler(0f, 0f, 90f);
+            while ( nextAngle < 0.75f ) {
+                transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 0.75f);
+                nextAngle += Time.deltaTime;
+                yield return null;
+            }
 
-		/// <summary>
-		/// Rotate the guard. Use the forward axis and rotate with angle.
-		/// </summary>
-		/// <param name="_angle">Angle in degrees</param>
-		private void Rotate(float _angle = 90)
-		{
-			transform.Rotate(Vector3.forward, _angle);
-		}
+            nextAngle = 0f;
+            rotation = transform.rotation;
+            endAngle = rotation * Quaternion.Euler(0f, 0f, 180f);
+            while ( nextAngle < 1.5f ) {
+                transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 1.5f);
+                nextAngle += Time.deltaTime;
+                yield return null;
+            }
+            
+            // TODO : Need to do this with a Lerp for smoother transition
+            // We may have a bug with navmesh but easily solvable by forcing agent to face next waypoint - emartinez
+            transform.rotation = defaultRotation;
+            m_lostCoroutine = null; // Coroutine manage its life cycle
 
-		/// </summary>
-		/// Guard routine to attack the player if in bound
-		/// </summary>
-		private void PlayerAttack(Vector3 _target)
-		{
-			if (Vector3.Distance(transform.position, _target) < m_soundDistance)
-			{
-				Trigger(_target);
-			}
-		}
+            // Go to next point
+            GoToNextPatrolPoint();
+        }
 
-		/// </summary>
-		/// Guard routine when it loose los (line of sight) of the player 
-		/// </summary>
-		private IEnumerator LostPlayerRoutine()
-		{
-			float nextAngle = 0f;
-			Quaternion rotation = transform.rotation;
+        /// </summary>
+        /// Guard patroling routine
+        /// Each time it reach a waypoint it check for the next one
+        /// </summary>
+        private void GoToNextPatrolPoint() {
+            if ( m_agent.SetDestination( m_patrolPoints[ m_nextPatrolPoint ] ) ) {
+                m_nextPatrolPoint = ( m_nextPatrolPoint + 1 ) % m_patrolPoints.Count;
+            } else {
+                Debug.Log( "Error during next patrol point choosen" );
+            }
+        }
 
-			Quaternion endAngle = rotation * Quaternion.Euler(0f, 0f, 90f);
-			while (nextAngle < 0.75f)
-			{
-				transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 0.75f);
-				nextAngle += Time.deltaTime;
-				yield return null;
-			}
+        /// <summary>
+        /// Check if the player is in the "light" 
+        /// </summary>
+        private bool CheckForPlayer() {
+            float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up),
+            Vector3.Normalize(transform.position - m_playerPos.position)));
+            angle = angle * 180 / Mathf.PI;
+            if ( angle < m_recognitionAngle ) {
+                if ( Vector3.Distance(transform.position, m_playerPos.position) < m_recognitionDistance ) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-			nextAngle = 0f;
-			rotation = transform.rotation;
-			endAngle = rotation * Quaternion.Euler(0f, 0f, 180f);
-			while (nextAngle < 1.5f)
-			{
-				transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 1.5f);
-				nextAngle += Time.deltaTime;
-				yield return null;
-			}
+        /// <summary>
+        /// Trigger the "see the player comportement"
+        /// </summary>
+        public void Trigger(Vector2 _triggerPos) {
+            m_agent.SetDestination(new(_triggerPos.x, _triggerPos.y, transform.position.z));
+        }
 
-			// Go to next point
-			GoToNextPatrolPoint();
-		}
-
-		/// </summary>
-		/// Guard patroling routine
-		/// </summary>
-		private void GoToNextPatrolPoint()
-		{
-			m_agent.SetDestination(m_patrolPoints[m_nextPatrolPoint]);
-			m_nextPatrolPoint = (m_nextPatrolPoint + 1) % m_patrolPoints.Count;
-			m_agentMoving = true;
-		}
-
-		/// <summary>
-		/// Check if the player is in the "light" 
-		/// </summary>
-		private bool CheckForPlayer()
-		{
-			float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up),
-			Vector3.Normalize(transform.position - m_playerPos.position)));
-			angle = angle * 180 / Mathf.PI;
-			if (angle < m_recognitionAngle)
-			{
-				if (Vector3.Distance(transform.position, m_playerPos.position) < m_recognitionDistance)
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		/// <summary>
-		/// Trigger the "see the player comportement"
-		/// </summary>
-		public void Trigger(Vector2 _triggerPos)
-		{
-			m_agent.SetDestination(new(_triggerPos.x, _triggerPos.y, transform.position.z));
-			m_agentMoving = true;
-		}
-
-		public void IsAttacked(float damage)
-		{
-			Debug.Log("Non aled on m'attaque");
-		}
-	}
+        public void IsAttacked(float damage) {
+            Debug.Log("Non aled on m'attaque");
+        }
+    }
 
 }
