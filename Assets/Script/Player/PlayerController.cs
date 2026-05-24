@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using EANasir.Interface;
 using EANasir.Object;
@@ -109,8 +108,6 @@ namespace EANasir.Player
 			m_copperQuantity = 0;
 			m_calculateSpeed = m_speed;
 			m_questObjects = new();
-			
-			//Reset du level
 		}
 		
 #endregion
