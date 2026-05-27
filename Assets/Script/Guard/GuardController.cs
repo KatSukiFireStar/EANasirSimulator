@@ -11,13 +11,14 @@ namespace EANasir.Guard {
         private NavMeshAgent m_agent;
         private Coroutine m_lostCoroutine = null;
         [SerializeField] private List<Vector3> m_patrolPoints = new();  // TODO : Replace with GameObject instead of Vector3
-        [SerializeField] private Transform m_playerPos;
+        [SerializeField] private GameObject m_player;
 
         [SerializeField] private float m_recognitionDistance = 5;
         [SerializeField] private float m_recognitionAngle = 15;
         [SerializeField] private float m_soundDistance = 10;
         [SerializeField] private float m_lossOfSight = 0;
 
+        private readonly float m_guardAttackDistance = 1.3f;   // Not scheduled to change
         private int m_nextPatrolPoint = 0;
         private bool m_followingPlayer = false;
 
@@ -43,6 +44,13 @@ namespace EANasir.Guard {
             GoToNextPatrolPoint();
         }
 
+        /// <summary>
+        /// Clean destroy of the guard
+        /// </summary>
+        private void OnDestroy() {
+            EventManager.RemoveListener<Vector3>("PlayerAttack", PlayerAttack);
+        }
+
         /// </summary>
         /// Check if the player is in the los (line of sight) else patrol
         /// CheckForPlayer must be <<<< compared to m_agent.remainingDistance <= m_agent.stoppingDistance
@@ -59,12 +67,18 @@ namespace EANasir.Guard {
                 }
 
                 // Follow player
-                Trigger(m_playerPos.position);  
+                Trigger(m_player.transform.position);  
             }
 
             // If we are following the player
             if ( m_followingPlayer ) {  
-                float agentPlayerDist = Vector3.Distance( transform.position, m_playerPos.position );
+                float agentPlayerDist = Vector3.Distance( transform.position, m_player.transform.position );
+
+                // TODO why did I do this in code instead of the mesh collider ? idk
+                if ( agentPlayerDist < m_guardAttackDistance ) {    // If the player is in bound with the guard
+                    AttackPlayer();
+                    agentPlayerDist = Vector3.Distance(transform.position, m_player.transform.position);    // Update new player dist
+                }
 
                 // Check that it is not out of bounds (TODO : refacto with a timer maybe ?)
                 if ( agentPlayerDist > m_lossOfSight ) {   
@@ -139,10 +153,10 @@ namespace EANasir.Guard {
         /// </summary>
         private bool CheckForPlayer() {
             float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up),
-            Vector3.Normalize(transform.position - m_playerPos.position)));
+            Vector3.Normalize(transform.position - m_player.transform.position)));
             angle = angle * 180 / Mathf.PI;
             if ( angle < m_recognitionAngle ) {
-                if ( Vector3.Distance(transform.position, m_playerPos.position) < m_recognitionDistance ) {
+                if ( Vector3.Distance(transform.position, m_player.transform.position) < m_recognitionDistance ) {
                     return true;
                 }
             }

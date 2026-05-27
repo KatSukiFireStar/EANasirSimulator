@@ -54,11 +54,18 @@ namespace EANasir.Player
 			EventManager.AddListener("EndLevel", EndLevel);
 		}
 
+        public void ReSpawnToCheckPoint() {
+            // Could be cool to add a fade to black or idk just a big pop up that show and you can restart the game really
+            //  fast like in Hotline Miami
+            Debug.Log("You have been caught, returning to checkpoint");
+            transform.position = GameObject.Find("SpawnPoint").transform.position; // System.SpawnPoint >()
+        }
+
 #region Events
-		/// <summary>
-		/// Add copper and change calculate speed depending of copper quantity
-		/// </summary>
-		private void InteractOnPerformed(InputAction.CallbackContext _)
+        /// <summary>
+        /// Add copper and change calculate speed depending of copper quantity
+        /// </summary>
+        private void InteractOnPerformed(InputAction.CallbackContext _)
 		{
 			m_copperQuantity += m_interactableObject?.Interact() ?? 0;
 			m_calculateSpeed = m_speed;
