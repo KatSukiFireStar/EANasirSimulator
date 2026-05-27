@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using EANasir.Interface;
 using EANasir.Object;
@@ -51,6 +50,8 @@ namespace EANasir.Player
 			EventManager.AddListener("RemoveInteractTriggerBox", RemoveInteractTriggerBox);
 			
 			EventManager.AddListener<QuestObjectSO>("AddQuestObjectToInventory", AddQuestObjectToInventory);
+			
+			EventManager.AddListener("EndLevel", EndLevel);
 		}
 
 #region Events
@@ -99,6 +100,14 @@ namespace EANasir.Player
 			m_questObjects.Add(_obj);
 			
 			//Add the object to UI
+		}
+
+		private void EndLevel()
+		{
+			Debug.Log("Game Over");
+			m_copperQuantity = 0;
+			m_calculateSpeed = m_speed;
+			m_questObjects = new();
 		}
 		
 #endregion
