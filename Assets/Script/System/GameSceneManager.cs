@@ -23,7 +23,7 @@ namespace EANasir.System
 
 		private void StartLevel(string levelName)
 		{
-			SceneManager.LoadScene(m_hubName);
+			SceneManager.LoadScene(levelName);
 		}
 		
 		

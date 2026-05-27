@@ -1,6 +1,7 @@
 using System;
 using EANasir.Interface;
 using EANasir.Player;
+using Event;
 using UnityEngine;
 
 namespace EANasir.Object
@@ -12,10 +13,13 @@ namespace EANasir.Object
 		private float m_cost;
 
 		[SerializeField]
-		private Sprite m_completeSPrite;
+		private Sprite m_completeSprite;
 
 		private SpriteRenderer m_renderer;
 		private bool m_isComplete = false;
+
+		[HideInInspector]
+		public int childNb = 0;
 
 		private void Awake()
 		{
@@ -29,13 +33,24 @@ namespace EANasir.Object
 		/// <returns></returns>
 		public float Interact(PlayerController _player)
 		{
-			if (!m_isComplete && _player.savedCopperQuantity < m_cost)
+			if (m_isComplete || _player.savedCopperQuantity < m_cost)
 				return 0f;
 			
 			m_isComplete = true;
-			m_renderer.sprite = m_completeSPrite;
+			m_renderer.sprite = m_completeSprite;
 			_player.savedCopperQuantity -= m_cost;
+			EventManager.InvokeEvent("BuildDefenseObject", childNb);
 			return 0f;
+		}
+
+		public void Rebuild(bool isComplete, int _childNb)
+		{
+			childNb = _childNb;
+			if(!isComplete)
+				return;
+			
+			m_isComplete = true;
+			m_renderer.sprite = m_completeSprite;
 		}
 	}
 }
