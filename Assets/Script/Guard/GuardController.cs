@@ -10,14 +10,15 @@ namespace EANasir.Guard {
     public class GuardController : MonoBehaviour, IAttackable {
         private NavMeshAgent m_agent;
         private Coroutine m_lostCoroutine = null;
-        [SerializeField] private List<Vector3> m_patrolPoints = new();  // TODO : Replace with GameObject instead of Vector3
-        [SerializeField] private Transform m_playerPos;
+        [SerializeField] private List< Vector3 > m_patrolPoints = new();
+        [SerializeField] private GameObject m_player;
 
         [SerializeField] private float m_recognitionDistance = 5;
         [SerializeField] private float m_recognitionAngle = 15;
         [SerializeField] private float m_soundDistance = 10;
-        [SerializeField] private float m_lossOfSight = 0;
+        [SerializeField] private float m_lossOfSight = 5;
 
+        private readonly float m_guardAttackDistance = 1.3f;   // Not scheduled to change
         private int m_nextPatrolPoint = 0;
         private bool m_followingPlayer = false;
 
@@ -25,11 +26,11 @@ namespace EANasir.Guard {
         /// Init NavMeshAgent, player attack, patrol points & the guard line of sight
         /// </summary>
         private void Awake() {
-            EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
-            m_agent = GetComponent<NavMeshAgent>();
+            EventManager.AddListener< Vector3 >( "PlayerAttack", PlayerAttack );
+            m_agent = GetComponent< NavMeshAgent >();
 
             // TODO Remove
-            LineRenderer lr = GetComponent<LineRenderer>();
+            LineRenderer lr = GetComponent< LineRenderer >();
             for ( int i = 0; i < lr.positionCount; i++ ) {
                 var pos = lr.GetPosition(i);
                 pos.z = 0;
@@ -37,10 +38,17 @@ namespace EANasir.Guard {
             }
             Destroy(lr);
 
-            Light2D light = GetComponentInChildren<Light2D>();
+            Light2D light = GetComponentInChildren< Light2D >();
             light.pointLightOuterRadius = m_recognitionDistance;
             light.pointLightOuterAngle = m_recognitionAngle;
             GoToNextPatrolPoint();
+        }
+
+        /// <summary>
+        /// Clean destroy of the guard
+        /// </summary>
+        private void OnDestroy() {
+            EventManager.RemoveListener< Vector3 >( "PlayerAttack", PlayerAttack );
         }
 
         /// </summary>
@@ -54,17 +62,23 @@ namespace EANasir.Guard {
 
                 // If we are in a coroutine, stop it
                 if ( m_lostCoroutine != null ) {    
-                    StopCoroutine(nameof(LostPlayerRoutine));
+                    StopCoroutine( nameof( LostPlayerRoutine ) );
                     m_lostCoroutine = null;
                 }
 
                 // Follow player
-                Trigger(m_playerPos.position);  
+                Trigger(m_player.transform.position );
             }
 
             // If we are following the player
             if ( m_followingPlayer ) {  
-                float agentPlayerDist = Vector3.Distance( transform.position, m_playerPos.position );
+                float agentPlayerDist = Vector3.Distance( transform.position, m_player.transform.position );
+
+                // TODO why did I do this in code instead of the mesh collider ? idk
+                if ( agentPlayerDist < m_guardAttackDistance ) {    // If the player is in bound with the guard
+                    AttackPlayer();
+                    agentPlayerDist = Vector3.Distance(transform.position, m_player.transform.position);    // Update new player dist
+                }
 
                 // Check that it is not out of bounds (TODO : refacto with a timer maybe ?)
                 if ( agentPlayerDist > m_lossOfSight ) {   
@@ -81,12 +95,19 @@ namespace EANasir.Guard {
         }
 
         /// </summary>
-        /// Guard routine to attack the player if in bound
+        /// Guard routine when the player attack and the guard is in bound
         /// </summary>
-        private void PlayerAttack(Vector3 _target) {
-            if ( Vector3.Distance(transform.position, _target) < m_soundDistance ) {
-                Trigger(_target);
+        private void PlayerAttack( Vector3 _target ) {
+            if ( Vector3.Distance( transform.position, _target ) < m_soundDistance ) {
+                Trigger( _target );
             }
+        }
+
+        /// <summary>
+        /// Guard routine when the player is in bound and the guard attack
+        /// </summary>
+        private void AttackPlayer() {
+            m_player.GetComponent< Player.PlayerController >().ReSpawnToCheckPoint();
         }
 
         /// </summary>
@@ -99,7 +120,7 @@ namespace EANasir.Guard {
 
             Quaternion endAngle = rotation * Quaternion.Euler(0f, 0f, 90f);
             while ( nextAngle < 0.75f ) {
-                transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 0.75f);
+                transform.rotation = Quaternion.Lerp( rotation, endAngle, nextAngle / 0.75f );
                 nextAngle += Time.deltaTime;
                 yield return null;
             }
@@ -108,7 +129,7 @@ namespace EANasir.Guard {
             rotation = transform.rotation;
             endAngle = rotation * Quaternion.Euler(0f, 0f, 180f);
             while ( nextAngle < 1.5f ) {
-                transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 1.5f);
+                transform.rotation = Quaternion.Lerp( rotation, endAngle, nextAngle / 1.5f );
                 nextAngle += Time.deltaTime;
                 yield return null;
             }
@@ -139,10 +160,10 @@ namespace EANasir.Guard {
         /// </summary>
         private bool CheckForPlayer() {
             float angle = Mathf.Acos(Vector3.Dot(-Vector3.Normalize(transform.up),
-            Vector3.Normalize(transform.position - m_playerPos.position)));
+            Vector3.Normalize(transform.position - m_player.transform.position)));
             angle = angle * 180 / Mathf.PI;
             if ( angle < m_recognitionAngle ) {
-                if ( Vector3.Distance(transform.position, m_playerPos.position) < m_recognitionDistance ) {
+                if ( Vector3.Distance(transform.position, m_player.transform.position) < m_recognitionDistance ) {
                     return true;
                 }
             }
