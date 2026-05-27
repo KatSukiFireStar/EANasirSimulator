@@ -1,4 +1,5 @@
 using EANasir.Interface;
+using EANasir.Player;
 using UnityEngine;
 
 namespace EANasir.Object
@@ -37,7 +38,7 @@ namespace EANasir.Object
 			}
 		}
 
-		public float Interact()
+		public float Interact(PlayerController _player)
 		{
 			if (!m_isBroken)
 				return 0;

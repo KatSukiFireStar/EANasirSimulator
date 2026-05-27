@@ -1,4 +1,5 @@
 using EANasir.Interface;
+using EANasir.Player;
 using Event;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace EANasir.Object
 		[SerializeField]
 		private QuestObjectSO m_questObject;
 		
-		public float Interact()
+		public float Interact(PlayerController _player)
 		{
 			EventManager.InvokeEvent("AddQuestObjectToInventory", m_questObject);
 			Destroy(gameObject);

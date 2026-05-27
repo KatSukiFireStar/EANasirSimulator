@@ -26,6 +26,7 @@ namespace EANasir.Player
         
 		[SerializeField] private float m_maxCopperQuantity = 20f;
 		[SerializeField] private float m_copperQuantity = 0f;
+		[HideInInspector] public float savedCopperQuantity = 0f;
 		
 		private List<QuestObjectSO> m_questObjects = new();
 
@@ -60,7 +61,7 @@ namespace EANasir.Player
 		/// </summary>
 		private void InteractOnPerformed(InputAction.CallbackContext _)
 		{
-			m_copperQuantity += m_interactableObject?.Interact() ?? 0;
+			m_copperQuantity += m_interactableObject?.Interact(this) ?? 0;
 			m_calculateSpeed = m_speed;
 
 			if (m_copperQuantity <= m_maxCopperQuantity * 0.5f)
