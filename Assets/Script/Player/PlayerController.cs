@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EANasir.Interface;
 using EANasir.Object;
@@ -50,15 +51,13 @@ namespace EANasir.Player
 			EventManager.AddListener("RemoveInteractTriggerBox", RemoveInteractTriggerBox);
 			
 			EventManager.AddListener<QuestObjectSO>("AddQuestObjectToInventory", AddQuestObjectToInventory);
-			
-			EventManager.AddListener("EndLevel", EndLevel);
 		}
 
         public void ReSpawnToCheckPoint() {
-			// Could be cool to add a fade to black or idk just a big pop up that show and you can restart the game really
-			//  fast like in Hotline Miami
-			Debug.Log( "You have been caught, returning to checkpoint" );
-			transform.position = GameObject.Find("SpawnPoint").transform.position; // System.SpawnPoint >()
+            // Could be cool to add a fade to black or idk just a big pop up that show and you can restart the game really
+            //  fast like in Hotline Miami
+            Debug.Log("You have been caught, returning to checkpoint");
+            transform.position = GameObject.Find("SpawnPoint").transform.position; // System.SpawnPoint >()
         }
 
 #region Events
@@ -109,14 +108,6 @@ namespace EANasir.Player
 			//Add the object to UI
 		}
 
-		private void EndLevel()
-		{
-			Debug.Log("Game Over");
-			m_copperQuantity = 0;
-			m_calculateSpeed = m_speed;
-			m_questObjects = new();
-		}
-		
 #endregion
 
 		/// <summary>

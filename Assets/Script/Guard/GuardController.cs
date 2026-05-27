@@ -10,13 +10,13 @@ namespace EANasir.Guard {
     public class GuardController : MonoBehaviour, IAttackable {
         private NavMeshAgent m_agent;
         private Coroutine m_lostCoroutine = null;
-        [SerializeField] private List< Vector3 > m_patrolPoints = new();
+        [SerializeField] private List<Vector3> m_patrolPoints = new();  // TODO : Replace with GameObject instead of Vector3
         [SerializeField] private GameObject m_player;
 
         [SerializeField] private float m_recognitionDistance = 5;
         [SerializeField] private float m_recognitionAngle = 15;
         [SerializeField] private float m_soundDistance = 10;
-        [SerializeField] private float m_lossOfSight = 5;
+        [SerializeField] private float m_lossOfSight = 0;
 
         private readonly float m_guardAttackDistance = 1.3f;   // Not scheduled to change
         private int m_nextPatrolPoint = 0;
@@ -26,11 +26,11 @@ namespace EANasir.Guard {
         /// Init NavMeshAgent, player attack, patrol points & the guard line of sight
         /// </summary>
         private void Awake() {
-            EventManager.AddListener< Vector3 >( "PlayerAttack", PlayerAttack );
-            m_agent = GetComponent< NavMeshAgent >();
+            EventManager.AddListener<Vector3>("PlayerAttack", PlayerAttack);
+            m_agent = GetComponent<NavMeshAgent>();
 
             // TODO Remove
-            LineRenderer lr = GetComponent< LineRenderer >();
+            LineRenderer lr = GetComponent<LineRenderer>();
             for ( int i = 0; i < lr.positionCount; i++ ) {
                 var pos = lr.GetPosition(i);
                 pos.z = 0;
@@ -38,7 +38,7 @@ namespace EANasir.Guard {
             }
             Destroy(lr);
 
-            Light2D light = GetComponentInChildren< Light2D >();
+            Light2D light = GetComponentInChildren<Light2D>();
             light.pointLightOuterRadius = m_recognitionDistance;
             light.pointLightOuterAngle = m_recognitionAngle;
             GoToNextPatrolPoint();
@@ -48,7 +48,7 @@ namespace EANasir.Guard {
         /// Clean destroy of the guard
         /// </summary>
         private void OnDestroy() {
-            EventManager.RemoveListener< Vector3 >( "PlayerAttack", PlayerAttack );
+            EventManager.RemoveListener<Vector3>("PlayerAttack", PlayerAttack);
         }
 
         /// </summary>
@@ -62,12 +62,12 @@ namespace EANasir.Guard {
 
                 // If we are in a coroutine, stop it
                 if ( m_lostCoroutine != null ) {    
-                    StopCoroutine( nameof( LostPlayerRoutine ) );
+                    StopCoroutine(nameof(LostPlayerRoutine));
                     m_lostCoroutine = null;
                 }
 
                 // Follow player
-                Trigger(m_player.transform.position );
+                Trigger(m_player.transform.position);  
             }
 
             // If we are following the player
@@ -95,19 +95,12 @@ namespace EANasir.Guard {
         }
 
         /// </summary>
-        /// Guard routine when the player attack and the guard is in bound
+        /// Guard routine to attack the player if in bound
         /// </summary>
-        private void PlayerAttack( Vector3 _target ) {
-            if ( Vector3.Distance( transform.position, _target ) < m_soundDistance ) {
-                Trigger( _target );
+        private void PlayerAttack(Vector3 _target) {
+            if ( Vector3.Distance(transform.position, _target) < m_soundDistance ) {
+                Trigger(_target);
             }
-        }
-
-        /// <summary>
-        /// Guard routine when the player is in bound and the guard attack
-        /// </summary>
-        private void AttackPlayer() {
-            m_player.GetComponent< Player.PlayerController >().ReSpawnToCheckPoint();
         }
 
         /// </summary>
@@ -120,7 +113,7 @@ namespace EANasir.Guard {
 
             Quaternion endAngle = rotation * Quaternion.Euler(0f, 0f, 90f);
             while ( nextAngle < 0.75f ) {
-                transform.rotation = Quaternion.Lerp( rotation, endAngle, nextAngle / 0.75f );
+                transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 0.75f);
                 nextAngle += Time.deltaTime;
                 yield return null;
             }
@@ -129,7 +122,7 @@ namespace EANasir.Guard {
             rotation = transform.rotation;
             endAngle = rotation * Quaternion.Euler(0f, 0f, 180f);
             while ( nextAngle < 1.5f ) {
-                transform.rotation = Quaternion.Lerp( rotation, endAngle, nextAngle / 1.5f );
+                transform.rotation = Quaternion.Lerp(rotation, endAngle, nextAngle / 1.5f);
                 nextAngle += Time.deltaTime;
                 yield return null;
             }
